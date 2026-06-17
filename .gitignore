@@ -19,9 +19,14 @@ gradlew.bat
 
 # macOS
 .DS_Store
+
+# Images (root-level screenshots etc.)
 *.png
 *.jpg
 *.jpeg
+!docs/*.png
+!docs/*.jpg
+!docs/*.jpeg
 
 # Application config (contains credentials)
 src/main/resources/application.yml

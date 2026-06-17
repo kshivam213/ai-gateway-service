@@ -12,6 +12,16 @@ The service provides three core capabilities:
 
 A bundled vanilla-JS frontend is served at `http://localhost:8095` and provides views for managing agents, tools, running playground conversations, and a basic observability log.
 
+## Demo
+
+**Playground** — chat with a registered agent in real time. The agent runs an iterative tool-call loop and streams the final answer back.
+
+![Playground](docs/demo-playground.png)
+
+**Analytics** — at-a-glance usage metrics: total requests, tokens used, average latency, and active agent count.
+
+![Analytics](docs/demo-analytics.png)
+
 ## Tech Stack
 
 | Layer | Technology |
