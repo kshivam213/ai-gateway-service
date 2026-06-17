@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Diagnostics</title>
+<style>
+body { font-family: -apple-system, monospace; padding: 24px; background: #f5f7fb; color: #111; }
+h1 { margin: 0 0 16px; }
+.row { padding: 10px 14px; margin: 6px 0; border-radius: 8px; background: #fff; border: 1px solid #e6e8ef; }
+.ok { border-left: 4px solid #10b981; }
+.bad { border-left: 4px solid #dc2626; background: #fef2f2; }
+.k { display: inline-block; min-width: 220px; color: #6b7280; }
+button { padding: 8px 14px; margin: 8px 0; border-radius: 6px; border: 1px solid #4f46e5; background: #4f46e5; color: white; cursor: pointer; font-size: 14px; }
+pre { background: #111; color: #0f0; padding: 12px; border-radius: 6px; overflow: auto; max-height: 240px; font-size: 12px; }
+#clickbox { padding: 12px; margin: 4px 0; background: #eef2ff; border: 1px solid #4f46e5; border-radius: 6px; cursor: pointer; user-select: none; }
+</style></head>
+<body>
+<h1>AI Gateway — Browser Diagnostics</h1>
+<p>If clicks below do nothing, your browser/extension is blocking JS execution on localhost.</p>
+
+<div id="results"></div>
+
+<button id="btn1">Test 1: Inline button click</button>
+<div id="clickbox">Click me (test 2)</div>
+
+<h3>Console output captured:</h3>
+<pre id="log">(loading...)</pre>
+
+<h3>Fetch test for backend:</h3>
+<button id="btn-fetch">Fetch /agents</button>
+<pre id="fetch-out">(not run)</pre>
+
+<script>
+(function() {
+  const log = document.getElementById('log');
+  const results = document.getElementById('results');
+  const lines = [];
+  function write(msg) { lines.push(msg); log.textContent = lines.join('\n'); }
+  function row(label, value, ok) {
+    const div = document.createElement('div');
+    div.className = 'row ' + (ok ? 'ok' : 'bad');
+    div.innerHTML = '<span class="k">' + label + '</span> ' + value;
+    results.appendChild(div);
+  }
+
+  // capture errors
+  window.addEventListener('error', e => write('ERROR: ' + e.message + ' at ' + e.filename + ':' + e.lineno));
+  window.addEventListener('unhandledrejection', e => write('PROMISE REJ: ' + e.reason));
+
+  try {
+    write('Script started.');
+    row('Script executed', 'YES', true);
+    row('User-Agent', navigator.userAgent, true);
+    row('Document readyState', document.readyState, true);
+    row('Location', location.href, true);
+
+    // Test 1: button click
+    document.getElementById('btn1').addEventListener('click', () => {
+      write('btn1 clicked at ' + new Date().toISOString());
+      alert('Button click works!');
+    });
+    row('btn1 listener attached', 'YES', true);
+
+    // Test 2: div click
+    document.getElementById('clickbox').addEventListener('click', () => {
+      write('clickbox clicked at ' + new Date().toISOString());
+      document.getElementById('clickbox').style.background = '#10b981';
+      document.getElementById('clickbox').style.color = '#fff';
+      document.getElementById('clickbox').textContent = 'CLICK WORKED!';
+    });
+    row('clickbox listener attached', 'YES', true);
+
+    // Test 3: fetch
+    document.getElementById('btn-fetch').addEventListener('click', async () => {
+      const out = document.getElementById('fetch-out');
+      out.textContent = 'Fetching...';
+      try {
+        const r = await fetch('/agents');
+        const t = await r.text();
+        out.textContent = 'Status: ' + r.status + '\nBody: ' + t;
+      } catch (e) {
+        out.textContent = 'Fetch failed: ' + e.message;
+      }
+    });
+
+    // Test 4: load main app.js & check it
+    fetch('/app.js?v=2').then(r => {
+      row('GET /app.js?v=2', 'status=' + r.status, r.status === 200);
+      return r.text();
+    }).then(t => {
+      row('app.js length', t.length + ' bytes', t.length > 10000);
+      row('app.js has wireEvents()', t.includes('function wireEvents'), t.includes('function wireEvents'));
+      row('app.js has init() fallback', t.includes('readyState'), t.includes('readyState'));
+    }).catch(e => row('app.js fetch failed', e.message, false));
+
+    write('All listeners attached. Click the buttons above to test.');
+  } catch (e) {
+    write('FATAL during script: ' + e.message);
+    row('Script crashed', e.message, false);
+  }
+})();
+</script>
+</body></html>
+

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>AI Gateway Console</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234f46e5'/%3E%3Ctext x='50%25' y='54%25' font-size='40' text-anchor='middle' fill='white' font-family='Arial' dominant-baseline='middle'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="styles.css?v=7" />
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-logo">⚡</div>
+            <div class="brand-text">
+                <div class="brand-title">AI Gateway</div>
+                <div class="brand-sub">Control Plane</div>
+            </div>
+        </div>
+        <nav class="nav">
+            <button class="nav-item active" data-view="agents">🤖 Agents</button>
+            <button class="nav-item" data-view="tools">
+                <svg class="nav-icon" viewBox="0 0 180 180" fill="none" aria-hidden="true" focusable="false">
+                    <path d="M23.5996 85.2532L86.2021 22.6507C94.8457 14.0071 108.86 14.0071 117.503 22.6507C126.147 31.2942 126.147 45.3083 117.503 53.9519L70.2254 101.23"
+                          stroke="currentColor" stroke-width="14" stroke-linecap="round"/>
+                    <path d="M70.8789 100.578L117.504 53.952C126.148 45.3083 140.163 45.3083 148.806 53.952L149.132 54.278C157.776 62.9216 157.776 76.9357 149.132 85.5792L92.5139 142.198C89.6327 145.079 89.6327 149.75 92.5139 152.631L104.14 164.257"
+                          stroke="currentColor" stroke-width="14" stroke-linecap="round"/>
+                    <path d="M101.853 38.3013L55.553 84.6011C46.9094 93.2447 46.9094 107.258 55.553 115.902C64.1966 124.546 78.2106 124.546 86.8543 115.902L133.154 69.6025"
+                          stroke="currentColor" stroke-width="14" stroke-linecap="round"/>
+                </svg>
+                Tools
+            </button>
+            <button class="nav-item" data-view="playground">💬 Playground</button>
+            <button class="nav-item" data-view="analytics">📊 Analytics</button>
+            <button class="nav-item" data-view="observability">🔍 Observability</button>
+        </nav>
+        <div class="sidebar-footer">v0.1 · demo</div>
+    </aside>
+
+    <main class="main">
+        <!-- Agents -->
+        <section class="view" id="view-agents">
+            <header class="view-header">
+                <div>
+                    <h1>Agents</h1>
+                    <p class="muted">Manage registered agents and their configurations.</p>
+                </div>
+                <button class="btn btn-primary" id="btn-new-agent">+ New Agent</button>
+            </header>
+            <div class="grid" id="agents-grid"></div>
+        </section>
+
+        <!-- Tools -->
+        <section class="view" id="view-tools" hidden>
+            <header class="view-header">
+                <div>
+                    <h1>Tools</h1>
+                    <p class="muted">Tools available to your agents.</p>
+                </div>
+                <button class="btn btn-primary" id="btn-new-tool">+ New Tool</button>
+            </header>
+            <div class="grid" id="tools-grid"></div>
+        </section>
+
+        <!-- Playground -->
+        <section class="view" id="view-playground" hidden>
+            <header class="view-header">
+                <div>
+                    <h1>Playground</h1>
+                    <p class="muted">Chat with a registered agent.</p>
+                </div>
+                <span class="badge">🛡 Guardrails Active</span>
+            </header>
+            <div class="playground">
+                <div class="playground-bar">
+                    <label>Agent
+                        <select id="playground-agent"></select>
+                    </label>
+                    <label>Session
+                        <input id="playground-session" value="demo-1" />
+                    </label>
+                    <button class="btn" id="playground-clear">Clear</button>
+                </div>
+                <div class="chat" id="chat"></div>
+                <form class="composer" id="composer">
+                    <textarea id="composer-input" rows="2" placeholder="Type a message..." required></textarea>
+                    <button class="btn btn-primary" type="submit">Send</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Analytics -->
+        <section class="view" id="view-analytics" hidden>
+            <header class="view-header">
+                <div>
+                    <h1>Analytics</h1>
+                    <p class="muted">Mocked usage metrics for the demo.</p>
+                </div>
+            </header>
+            <div class="stats" id="stats"></div>
+        </section>
+
+        <!-- Observability -->
+        <section class="view" id="view-observability" hidden>
+            <header class="view-header">
+                <div>
+                    <h1>Observability</h1>
+                    <p class="muted">Recent agent invocations from this session.</p>
+                </div>
+                <button class="btn" id="obs-clear">Clear</button>
+            </header>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                    <tr><th>requestId</th><th>agentId</th><th>input</th><th>response</th><th></th></tr>
+                    </thead>
+                    <tbody id="obs-tbody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="toast" id="toast" hidden></div>
+
+        <div class="modal" id="agent-modal" hidden>
+            <div class="modal-card">
+                <div class="modal-head">
+                    <h2>Create Agent</h2>
+                    <button class="icon-btn" id="agent-modal-close">✕</button>
+                </div>
+                <form id="agent-form" class="form">
+                    <label>Agent Name<input name="name" required placeholder="Payments Assistant" /></label>
+                    <label>Agent ID<input name="agentId" required placeholder="payments-assistant" /></label>
+                    <label>Model
+                        <select name="model" required>
+                            <option value="gpt-4o-mini">gpt-4o-mini</option>
+                            <option value="gpt-4o">gpt-4o</option>
+                            <option value="gpt-4-turbo">gpt-4-turbo</option>
+                            <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                        </select>
+                    </label>
+                    <label>System Prompt<textarea name="systemPrompt" rows="4" required placeholder="You are a helpful assistant..."></textarea></label>
+                    <label>Tools (comma-separated)<input name="tools" placeholder="getPayments, getOrderDetails" /></label>
+
+                    <fieldset class="guardrails">
+                        <legend>Guardrails</legend>
+                        <label class="check"><input type="checkbox" name="g_payment" /> Restrict to payment domain</label>
+                        <label class="check"><input type="checkbox" name="g_limit" /> Limit results</label>
+                        <label class="check"><input type="checkbox" name="g_unsafe" /> Block unsafe queries</label>
+                    </fieldset>
+
+                    <div class="form-error" id="agent-form-error" hidden></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn" id="agent-cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Agent</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="modal" id="tool-modal" hidden>
+            <div class="modal-card">
+                <div class="modal-head">
+                    <h2>Register Tool</h2>
+                    <button class="icon-btn" id="tool-modal-close">✕</button>
+                </div>
+                <form id="tool-form" class="form">
+                    <label>Name<input name="name" required placeholder="getPayments" /></label>
+                    <label>URL<input name="url" required placeholder="http://localhost:8081/tools/getPayments" /></label>
+                    <label>Method
+                        <select name="method" required>
+                            <option value="POST">POST</option>
+                            <option value="GET">GET</option>
+                            <option value="PUT">PUT</option>
+                            <option value="PATCH">PATCH</option>
+                            <option value="DELETE">DELETE</option>
+                        </select>
+                    </label>
+                    <label>Description<textarea name="description" rows="2" placeholder="Returns payments for a given user."></textarea></label>
+                    <label>Parameters (JSON Schema)<textarea name="parameters" rows="5" class="mono" placeholder='{"type":"object","properties":{"userId":{"type":"string"}},"required":["userId"]}'></textarea></label>
+                    <label>Headers (JSON, supports {{placeholders}})<textarea name="headers" rows="3" class="mono" placeholder='{"X-User-Id":"{{userId}}"}'></textarea></label>
+                    <label>Default Params (JSON)<textarea name="defaultParams" rows="3" class="mono" placeholder='{"limit":10}'></textarea></label>
+
+                    <div class="form-error" id="tool-form-error" hidden></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn" id="tool-cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Register Tool</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="modal" id="detail-modal" hidden>
+            <div class="modal-card">
+                <div class="modal-head">
+                    <h2>Request Detail</h2>
+                    <button class="icon-btn" id="detail-modal-close">✕</button>
+                </div>
+                <pre class="detail" id="detail-body"></pre>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="app.js?v=6" defer></script>
+</body>
+</html>
+

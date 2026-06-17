@@ -1,0 +1,37 @@
+# Compiled output
+build/
+out/
+*.class
+*.jar
+*.war
+
+# Gradle cache & wrapper binaries
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# macOS
+.DS_Store
+*.png
+*.jpg
+*.jpeg
+
+# Application config (contains credentials)
+src/main/resources/application.yml
+src/main/resources/application-*.yml
+!src/main/resources/application.yml.example
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+*.env
