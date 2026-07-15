@@ -29,14 +29,12 @@ import java.util.Map;
  * it contains {@code tool_calls}, every call is executed via {@link ToolInvoker}
  * and the results are appended as {@code role=tool} messages before the next
  * LLM call. The loop terminates as soon as the assistant returns a message
- * without tool calls, or after {@link #MAX_ITERATIONS} iterations.
+ * without tool calls, or after {@link #maxIterations} iterations.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AgentEngine {
-
-    private static final int MAX_ITERATIONS = 5;
 
     private final LLMService llmService;
     private final ToolRegistry toolRegistry;
@@ -67,8 +65,9 @@ public class AgentEngine {
         String lastRequestId = null;
         int totalPromptTokens = 0;
         int totalCompletionTokens = 0;
+        int maxIterations = agent.getMaxIterations() > 0 ? agent.getMaxIterations() : 5;
 
-        for (int iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
+        for (int iteration = 1; iteration <= maxIterations; iteration++) {
             LLMRequest request = LLMRequest.builder()
                     .model(agent.getModel())
                     .messages(messages)
@@ -114,14 +113,14 @@ public class AgentEngine {
         Message tail = messages.get(messages.size() - 1);
         return AgentRunResponse.builder()
                 .response(tail.getContent() == null
-                        ? "Agent did not converge within " + MAX_ITERATIONS + " iterations."
+                        ? "Agent did not converge within " + maxIterations + " iterations."
                         : tail.getContent())
                 .requestId(lastRequestId)
                 .promptTokens(totalPromptTokens)
                 .completionTokens(totalCompletionTokens)
                 .totalTokens(totalPromptTokens + totalCompletionTokens)
-                .iterations(MAX_ITERATIONS)
-                .status("MAX_ITERATIONS_REACHED")
+                .iterations(maxIterations)
+                .status("maxIterations_REACHED")
                 .build();
     }
 

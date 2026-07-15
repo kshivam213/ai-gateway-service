@@ -48,6 +48,9 @@ public class AgentEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "max_iterations", nullable = false)
+    private int maxIterations;
+
     // Not a JPA relationship — loaded separately by AgentToolRepository to stay loosely coupled
     @Transient
     @Builder.Default

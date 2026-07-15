@@ -1,5 +1,7 @@
 package com.aigateway.model;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
@@ -34,5 +36,9 @@ public class AgentConfig {
 
     @NotEmpty
     private List<String> tools;
+
+    @Min(1) @Max(20)
+    @Builder.Default
+    private int maxIterations = 5;
 }
 

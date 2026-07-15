@@ -76,7 +76,7 @@
         $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === name));
         if (name === 'agents') loadAgents();
         if (name === 'tools') loadTools();
-        if (name === 'playground') populatePlaygroundAgents();
+        if (name === 'playground') { populatePlaygroundAgents(); loadSessionHistory(); }
         if (name === 'analytics') renderAnalytics();
         if (name === 'observability') renderObservability();
     }
@@ -134,6 +134,7 @@
             model: fd.get('model').toString(),
             systemPrompt: fd.get('systemPrompt').toString(),
             tools,
+            maxIterations: parseInt(fd.get('maxIterations') || '5', 10),
         };
         const guardrails = {
             payment: !!fd.get('g_payment'),
@@ -296,6 +297,22 @@
         if (n) n.remove();
     }
 
+    async function loadSessionHistory() {
+        const sessionId = $('#playground-session').value.trim();
+        if (!sessionId) return;
+        try {
+            const history = await api(`/sessions/${encodeURIComponent(sessionId)}/history`);
+            if (history && history.length) {
+                state.chatHistory = history
+                    .filter(m => m.role === 'user' || m.role === 'assistant')
+                    .map(m => ({ role: m.role, content: m.content || '' }));
+                renderChat();
+            }
+        } catch (_) {
+            // session may not exist yet — that's fine
+        }
+    }
+
     async function sendMessage(e) {
         e.preventDefault();
         const input = $('#composer-input');
@@ -419,6 +436,10 @@
             }
         });
         $('#playground-clear').addEventListener('click', clearChat);
+        $('#playground-session').addEventListener('change', () => {
+            state.chatHistory = [];
+            loadSessionHistory();
+        });
         $('#obs-clear').addEventListener('click', () => { state.observability = []; renderObservability(); });
         $('#detail-modal-close').addEventListener('click', () => { $('#detail-modal').hidden = true; });
         [$('#agent-modal'), $('#tool-modal'), $('#detail-modal')].forEach(m => {

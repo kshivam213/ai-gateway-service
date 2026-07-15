@@ -21,6 +21,7 @@ public class AgentMapper {
                 .systemPrompt(entity.getSystemPrompt())
                 .model(entity.getModel())
                 .tools(tools)
+                .maxIterations(entity.getMaxIterations())
                 .build();
     }
 
@@ -31,6 +32,7 @@ public class AgentMapper {
                 .name(model.getName())
                 .systemPrompt(model.getSystemPrompt())
                 .model(model.getModel())
+                .maxIterations(model.getMaxIterations() > 0 ? model.getMaxIterations() : 5)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
