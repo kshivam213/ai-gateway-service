@@ -18,7 +18,7 @@
         agent_tools  (join table)
         ────────────────────────
         id              – surrogate BIGSERIAL primary key
-        agent_id / tool_name – unique pair; FK on agent_id references agents.agent_id
+        agent_id / tool_name – unique pair; no FK constraints (loosely coupled)
     -->
 
     <changeSet id="20260715000000002-1" author="shivam-kumar">
@@ -78,26 +78,6 @@
         <addUniqueConstraint tableName="agent_tools" schemaName="aigateway"
                              columnNames="agent_id, tool_name"
                              constraintName="uq_agent_tools_agent_tool"/>
-
-        <addForeignKeyConstraint
-                baseTableSchemaName="aigateway"
-                baseTableName="agent_tools"
-                baseColumnNames="agent_id"
-                referencedTableSchemaName="aigateway"
-                referencedTableName="agents"
-                referencedColumnNames="agent_id"
-                constraintName="fk_agent_tools_agent"
-                onDelete="CASCADE"/>
-
-        <addForeignKeyConstraint
-                baseTableSchemaName="aigateway"
-                baseTableName="agent_tools"
-                baseColumnNames="tool_name"
-                referencedTableSchemaName="aigateway"
-                referencedTableName="tools"
-                referencedColumnNames="name"
-                constraintName="fk_agent_tools_tool"
-                onDelete="CASCADE"/>
 
         <createIndex indexName="idx_agent_tools_agent_id" tableName="agent_tools" schemaName="aigateway">
             <column name="agent_id"/>

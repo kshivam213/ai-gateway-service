@@ -12,7 +12,7 @@
 
         id              – surrogate BIGSERIAL primary key
         request_id      – unique business key; UUID propagated from the LLM response
-        agent_id        – FK to agents.agent_id; SET NULL if agent is deleted
+        agent_id        – references agents.agent_id (no FK constraint; loosely coupled)
         session_id      – groups turns belonging to the same chat session
         input           – the user message that triggered the run
         response        – final assistant text returned to the caller
@@ -58,16 +58,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-
-        <addForeignKeyConstraint
-                baseTableSchemaName="aigateway"
-                baseTableName="agent_runs"
-                baseColumnNames="agent_id"
-                referencedTableSchemaName="aigateway"
-                referencedTableName="agents"
-                referencedColumnNames="agent_id"
-                constraintName="fk_agent_runs_agent"
-                onDelete="SET NULL"/>
 
         <createIndex indexName="idx_agent_runs_request_id" tableName="agent_runs" schemaName="aigateway">
             <column name="request_id"/>

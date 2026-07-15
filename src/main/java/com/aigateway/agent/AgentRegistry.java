@@ -1,8 +1,10 @@
 package com.aigateway.agent;
 
 import com.aigateway.model.AgentConfig;
+import com.aigateway.persistence.entity.AgentToolEntity;
 import com.aigateway.persistence.mapper.AgentMapper;
 import com.aigateway.persistence.repository.AgentRepository;
+import com.aigateway.persistence.repository.AgentToolRepository;
 import com.aigateway.registry.ToolRegistry;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -29,6 +32,7 @@ public class AgentRegistry {
     private final ConcurrentMap<String, AgentConfig> cache = new ConcurrentHashMap<>();
 
     private final AgentRepository agentRepository;
+    private final AgentToolRepository agentToolRepository;
     private final AgentMapper agentMapper;
     private final ToolRegistry toolRegistry;
 
@@ -36,6 +40,8 @@ public class AgentRegistry {
     @Transactional(readOnly = true)
     void init() {
         agentRepository.findAll().forEach(entity -> {
+            List<AgentToolEntity> tools = agentToolRepository.findByAgentId(entity.getAgentId());
+            entity.setAgentTools(tools);
             AgentConfig agent = agentMapper.toModel(entity);
             cache.put(agent.getAgentId(), agent);
             log.info("agent.registry.load agentId={} tools={}", agent.getAgentId(), agent.getTools());
@@ -48,7 +54,9 @@ public class AgentRegistry {
         if (cache.containsKey(config.getAgentId())) {
             throw new IllegalStateException("Agent already exists: " + config.getAgentId());
         }
-        agentRepository.save(agentMapper.toEntity(config));
+        var entity = agentMapper.toEntity(config);
+        agentRepository.save(entity);
+        agentToolRepository.saveAll(entity.getAgentTools());
         cache.put(config.getAgentId(), config);
         log.info("agent.registry.create agentId={} model={} tools={}",
                 config.getAgentId(), config.getModel(), config.getTools());
