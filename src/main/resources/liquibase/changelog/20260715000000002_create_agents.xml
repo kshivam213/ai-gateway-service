@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!--
+        agents
+        ──────
+        Stores registered agent configurations.
+
+        agent_id        – unique slug chosen by the caller (e.g. "payments-assistant")
+        name            – human-readable display name
+        system_prompt   – prompt prepended to every conversation
+        model           – LLM model identifier (e.g. "gpt-4o-mini")
+        created_at / updated_at – audit timestamps
+
+        agent_tools  (join table)
+        ────────────────────────
+        Many-to-many between agents and tools. An agent references tools by name;
+        the join row is deleted when either side is removed.
+    -->
+
+    <changeSet id="20260715000000002-1" author="shivam-kumar">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="agents" schemaName="aigateway"/></not>
+        </preConditions>
+
+        <createTable tableName="agents" schemaName="aigateway">
+            <column name="agent_id" type="VARCHAR(128)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="system_prompt" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="model" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_agents_model" tableName="agents" schemaName="aigateway">
+            <column name="model"/>
+        </createIndex>
+
+    </changeSet>
+
+    <changeSet id="20260715000000002-2" author="shivam-kumar">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="agent_tools" schemaName="aigateway"/></not>
+        </preConditions>
+
+        <createTable tableName="agent_tools" schemaName="aigateway">
+            <column name="agent_id" type="VARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tool_name" type="VARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="agent_tools" schemaName="aigateway"
+                       columnNames="agent_id, tool_name"
+                       constraintName="pk_agent_tools"/>
+
+        <addForeignKeyConstraint
+                baseTableSchemaName="aigateway"
+                baseTableName="agent_tools"
+                baseColumnNames="agent_id"
+                referencedTableSchemaName="aigateway"
+                referencedTableName="agents"
+                referencedColumnNames="agent_id"
+                constraintName="fk_agent_tools_agent"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableSchemaName="aigateway"
+                baseTableName="agent_tools"
+                baseColumnNames="tool_name"
+                referencedTableSchemaName="aigateway"
+                referencedTableName="tools"
+                referencedColumnNames="name"
+                constraintName="fk_agent_tools_tool"
+                onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_agent_tools_tool_name" tableName="agent_tools" schemaName="aigateway">
+            <column name="tool_name"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

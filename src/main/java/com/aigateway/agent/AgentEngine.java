@@ -65,6 +65,9 @@ public class AgentEngine {
         List<ToolDefinition> toolDefinitions = buildToolDefinitions(agent);
 
         String lastRequestId = null;
+        int totalPromptTokens = 0;
+        int totalCompletionTokens = 0;
+
         for (int iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
             LLMRequest request = LLMRequest.builder()
                     .model(agent.getModel())
@@ -75,6 +78,12 @@ public class AgentEngine {
 
             LLMResponse response = llmService.chat(request);
             lastRequestId = response.getRequestId();
+
+            if (response.getUsage() != null) {
+                totalPromptTokens += response.getUsage().getPromptTokens();
+                totalCompletionTokens += response.getUsage().getCompletionTokens();
+            }
+
             Message assistant = response.getChoices().get(0).getMessage();
             messages.add(assistant);
 
@@ -85,6 +94,11 @@ public class AgentEngine {
                 return AgentRunResponse.builder()
                         .response(assistant.getContent() == null ? "" : assistant.getContent())
                         .requestId(lastRequestId)
+                        .promptTokens(totalPromptTokens)
+                        .completionTokens(totalCompletionTokens)
+                        .totalTokens(totalPromptTokens + totalCompletionTokens)
+                        .iterations(iteration)
+                        .status("COMPLETED")
                         .build();
             }
 
@@ -103,6 +117,11 @@ public class AgentEngine {
                         ? "Agent did not converge within " + MAX_ITERATIONS + " iterations."
                         : tail.getContent())
                 .requestId(lastRequestId)
+                .promptTokens(totalPromptTokens)
+                .completionTokens(totalCompletionTokens)
+                .totalTokens(totalPromptTokens + totalCompletionTokens)
+                .iterations(MAX_ITERATIONS)
+                .status("MAX_ITERATIONS_REACHED")
                 .build();
     }
 

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!--
+        tools
+        ─────
+        Stores registered HTTP tools that agents can invoke.
+
+        name            – unique slug used by agents to reference the tool
+        url             – target HTTP endpoint
+        method          – HTTP verb (GET, POST, PUT, PATCH, DELETE)
+        description     – shown to the LLM in the tool definition
+        parameters      – JSON Schema object describing the tool's input shape
+        headers         – key/value pairs; values may contain {{placeholder}} tokens
+                          resolved from the agent run context at invocation time
+        default_params  – argument defaults merged before every invocation
+        created_at      – immutable creation timestamp
+        updated_at      – last-modified timestamp
+    -->
+
+    <changeSet id="20260715000000001-1" author="shivam-kumar">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="tools" schemaName="aigateway"/></not>
+        </preConditions>
+
+        <createTable tableName="tools" schemaName="aigateway">
+            <column name="name" type="VARCHAR(128)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="url" type="VARCHAR(2048)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="method" type="VARCHAR(10)" defaultValue="POST">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="parameters" type="JSONB"/>
+            <column name="headers" type="JSONB"/>
+            <column name="default_params" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+    </changeSet>
+
+</databaseChangeLog>

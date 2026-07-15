@@ -13,5 +13,13 @@ public class AgentRunResponse {
 
     private String response;
     private String requestId;
+
+    // Populated after a completed run — used by AgentRunService for persistence
+    private Integer promptTokens;
+    private Integer completionTokens;
+    private Integer totalTokens;
+    private Long latencyMs;
+    private Integer iterations;
+    private String status;
 }
 

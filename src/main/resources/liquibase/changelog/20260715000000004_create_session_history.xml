@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!--
+        session_messages
+        ────────────────
+        Persists the rolling conversation window for each session, replacing
+        the current in-process ConcurrentHashMap in SessionMemory.
+
+        One row per message turn. Ordered by sequence_num within a session.
+        The SessionMemory truncation logic (keep system + last N turns) is
+        enforced at the application layer on load.
+
+        session_id      – groups all messages for one chat session
+        sequence_num    – monotonically increasing within a session; used for
+                          ordering on load and for truncation (delete oldest)
+        role            – system | user | assistant | tool
+        content         – message text (may be null for pure tool-call assistant turns)
+        tool_name       – populated only for role=tool rows
+        tool_calls      – JSONB; populated only for role=assistant rows that
+                          produced tool calls (mirrors Message.toolCalls)
+        agent_id        – which agent owns this session (nullable; allows orphan cleanup)
+        created_at      – immutable; used for session TTL housekeeping
+    -->
+
+    <changeSet id="20260715000000004-2" author="shivam-kumar">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="session_messages" schemaName="aigateway"/></not>
+        </preConditions>
+
+        <createTable tableName="session_messages" schemaName="aigateway">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="session_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sequence_num" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content" type="TEXT"/>
+            <column name="tool_name" type="VARCHAR(128)"/>
+            <column name="tool_calls" type="JSONB"/>
+            <column name="agent_id" type="VARCHAR(128)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="session_messages"
+                schemaName="aigateway"
+                columnNames="session_id, sequence_num"
+                constraintName="uq_session_messages_session_seq"/>
+
+        <addForeignKeyConstraint
+                baseTableSchemaName="aigateway"
+                baseTableName="session_messages"
+                baseColumnNames="agent_id"
+                referencedTableSchemaName="aigateway"
+                referencedTableName="agents"
+                referencedColumnNames="agent_id"
+                constraintName="fk_session_messages_agent"
+                onDelete="SET NULL"/>
+
+        <createIndex indexName="idx_session_messages_session_id" tableName="session_messages" schemaName="aigateway">
+            <column name="session_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_session_messages_agent_id" tableName="session_messages" schemaName="aigateway">
+            <column name="agent_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_session_messages_created_at" tableName="session_messages" schemaName="aigateway">
+            <column name="created_at"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
