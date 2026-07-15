@@ -5,5 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AgentRepository extends JpaRepository<AgentEntity, String> {
+public interface AgentRepository extends JpaRepository<AgentEntity, Long> {
+
+    java.util.Optional<AgentEntity> findByAgentId(String agentId);
 }

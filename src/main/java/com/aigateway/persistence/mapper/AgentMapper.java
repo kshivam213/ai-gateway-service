@@ -13,7 +13,7 @@ public class AgentMapper {
 
     public AgentConfig toModel(AgentEntity entity) {
         List<String> tools = entity.getAgentTools().stream()
-                .map(at -> at.getId().getToolName())
+                .map(AgentToolEntity::getToolName)
                 .toList();
         return AgentConfig.builder()
                 .agentId(entity.getAgentId())
@@ -37,8 +37,8 @@ public class AgentMapper {
 
         List<AgentToolEntity> agentTools = model.getTools().stream()
                 .map(toolName -> AgentToolEntity.builder()
-                        .id(new AgentToolEntity.AgentToolId(model.getAgentId(), toolName))
-                        .agent(entity)
+                        .agentId(model.getAgentId())
+                        .toolName(toolName)
                         .build())
                 .toList();
         entity.setAgentTools(agentTools);

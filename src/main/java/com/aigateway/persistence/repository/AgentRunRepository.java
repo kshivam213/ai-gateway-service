@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface AgentRunRepository extends JpaRepository<AgentRunEntity, String> {
+public interface AgentRunRepository extends JpaRepository<AgentRunEntity, Long> {
 
     List<AgentRunEntity> findByAgentIdOrderByCreatedAtDesc(String agentId);
 

@@ -2,6 +2,8 @@ package com.aigateway.persistence.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -24,7 +26,11 @@ import java.util.Map;
 public class ToolEntity {
 
     @Id
-    @Column(name = "name", nullable = false, length = 128)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
+
+    @Column(name = "name", nullable = false, length = 128, unique = true)
     private String name;
 
     @Column(name = "url", nullable = false, length = 2048)

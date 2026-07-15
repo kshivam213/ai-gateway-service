@@ -1,20 +1,18 @@
 package com.aigateway.persistence.entity;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.io.Serializable;
 
 @Data
 @Builder
@@ -24,24 +22,18 @@ import java.io.Serializable;
 @Table(name = "agent_tools", schema = "aigateway")
 public class AgentToolEntity {
 
-    @EmbeddedId
-    private AgentToolId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
 
-    @MapsId("agentId")
+    @Column(name = "agent_id", nullable = false, length = 128)
+    private String agentId;
+
+    @Column(name = "tool_name", nullable = false, length = 128)
+    private String toolName;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "agent_id")
+    @JoinColumn(name = "agent_id", referencedColumnName = "agent_id", insertable = false, updatable = false)
     private AgentEntity agent;
-
-    @Data
-    @Embeddable
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class AgentToolId implements Serializable {
-
-        @Column(name = "agent_id", length = 128)
-        private String agentId;
-
-        @Column(name = "tool_name", length = 128)
-        private String toolName;
-    }
 }
