@@ -9,24 +9,20 @@
         agent_runs
         ──────────
         Immutable record of every agent invocation (one row per /agents/run call).
-        This is the observability backbone — never updated after insert.
 
-        request_id      – UUID propagated from the LLM upstream response; used to
-                          correlate playground UI rows with backend logs
-        agent_id        – FK to agents; kept even if agent is later deleted (SET NULL)
+        id              – surrogate BIGSERIAL primary key
+        request_id      – unique business key; UUID propagated from the LLM response
+        agent_id        – FK to agents.agent_id; SET NULL if agent is deleted
         session_id      – groups turns belonging to the same chat session
         input           – the user message that triggered the run
         response        – final assistant text returned to the caller
-        tool_calls      – JSONB array capturing every tool name + arguments + result
-                          produced during the LLM→tool→LLM loop
-        prompt_tokens   – tokens consumed by all LLM requests in the run
-        completion_tokens
-        total_tokens
+        tool_calls      – JSONB array: each entry has name, arguments, result
+        prompt_tokens / completion_tokens / total_tokens – token counters
         latency_ms      – wall-clock time from request receipt to response sent
         iterations      – how many LLM→tool loop iterations ran
         status          – COMPLETED | FAILED | MAX_ITERATIONS_REACHED
         error_message   – populated only when status != COMPLETED
-        created_at      – when the run started (immutable)
+        created_at      – immutable; when the run started
     -->
 
     <changeSet id="20260715000000003-1" author="shivam-kumar">
@@ -36,8 +32,11 @@
         </preConditions>
 
         <createTable tableName="agent_runs" schemaName="aigateway">
-            <column name="request_id" type="VARCHAR(128)">
+            <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="request_id" type="VARCHAR(128)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_agent_runs_request_id"/>
             </column>
             <column name="agent_id" type="VARCHAR(128)"/>
             <column name="session_id" type="VARCHAR(255)"/>
@@ -69,6 +68,10 @@
                 referencedColumnNames="agent_id"
                 constraintName="fk_agent_runs_agent"
                 onDelete="SET NULL"/>
+
+        <createIndex indexName="idx_agent_runs_request_id" tableName="agent_runs" schemaName="aigateway">
+            <column name="request_id"/>
+        </createIndex>
 
         <createIndex indexName="idx_agent_runs_agent_id" tableName="agent_runs" schemaName="aigateway">
             <column name="agent_id"/>

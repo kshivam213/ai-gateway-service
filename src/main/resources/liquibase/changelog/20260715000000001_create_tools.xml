@@ -8,8 +8,7 @@
     <!--
         tools
         ─────
-        Stores registered HTTP tools that agents can invoke.
-
+        id              – surrogate BIGSERIAL primary key
         name            – unique slug used by agents to reference the tool
         url             – target HTTP endpoint
         method          – HTTP verb (GET, POST, PUT, PATCH, DELETE)
@@ -29,8 +28,11 @@
         </preConditions>
 
         <createTable tableName="tools" schemaName="aigateway">
-            <column name="name" type="VARCHAR(128)">
+            <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(128)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_tools_name"/>
             </column>
             <column name="url" type="VARCHAR(2048)">
                 <constraints nullable="false"/>

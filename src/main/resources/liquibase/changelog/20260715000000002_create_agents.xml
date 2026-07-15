@@ -8,9 +8,8 @@
     <!--
         agents
         ──────
-        Stores registered agent configurations.
-
-        agent_id        – unique slug chosen by the caller (e.g. "payments-assistant")
+        id              – surrogate BIGSERIAL primary key
+        agent_id        – unique business key chosen by the caller (e.g. "payments-assistant")
         name            – human-readable display name
         system_prompt   – prompt prepended to every conversation
         model           – LLM model identifier (e.g. "gpt-4o-mini")
@@ -18,8 +17,8 @@
 
         agent_tools  (join table)
         ────────────────────────
-        Many-to-many between agents and tools. An agent references tools by name;
-        the join row is deleted when either side is removed.
+        id              – surrogate BIGSERIAL primary key
+        agent_id / tool_name – unique pair; FK on agent_id references agents.agent_id
     -->
 
     <changeSet id="20260715000000002-1" author="shivam-kumar">
@@ -29,8 +28,11 @@
         </preConditions>
 
         <createTable tableName="agents" schemaName="aigateway">
-            <column name="agent_id" type="VARCHAR(128)">
+            <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="agent_id" type="VARCHAR(128)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_agents_agent_id"/>
             </column>
             <column name="name" type="VARCHAR(255)">
                 <constraints nullable="false"/>
@@ -62,6 +64,9 @@
         </preConditions>
 
         <createTable tableName="agent_tools" schemaName="aigateway">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
             <column name="agent_id" type="VARCHAR(128)">
                 <constraints nullable="false"/>
             </column>
@@ -70,9 +75,9 @@
             </column>
         </createTable>
 
-        <addPrimaryKey tableName="agent_tools" schemaName="aigateway"
-                       columnNames="agent_id, tool_name"
-                       constraintName="pk_agent_tools"/>
+        <addUniqueConstraint tableName="agent_tools" schemaName="aigateway"
+                             columnNames="agent_id, tool_name"
+                             constraintName="uq_agent_tools_agent_tool"/>
 
         <addForeignKeyConstraint
                 baseTableSchemaName="aigateway"
@@ -93,6 +98,10 @@
                 referencedColumnNames="name"
                 constraintName="fk_agent_tools_tool"
                 onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_agent_tools_agent_id" tableName="agent_tools" schemaName="aigateway">
+            <column name="agent_id"/>
+        </createIndex>
 
         <createIndex indexName="idx_agent_tools_tool_name" tableName="agent_tools" schemaName="aigateway">
             <column name="tool_name"/>
